@@ -22,9 +22,10 @@ type Resources struct {
 }
 
 type State struct {
-	User      User
-	Resources *Resources
-	Factories []*Factory
+	User                User
+	Resources           *Resources
+	Factories           []*Factory
+	SecondsLeftInMinute int32
 }
 
 func (s State) clone() State {
@@ -77,6 +78,7 @@ func Start(user User, store Store) Game {
 				Level:    1,
 			},
 		},
+		SecondsLeftInMinute: 60,
 	}
 	store.SaveGame(state)
 	return Continue(state, store)
@@ -88,7 +90,6 @@ func Continue(state State, store Store) Game {
 
 	go func() {
 		secondTicker := time.NewTicker(time.Second)
-		minuteTicker := time.NewTicker(time.Minute)
 
 	mainLoop:
 		for {
@@ -97,17 +98,19 @@ func Continue(state State, store Store) Game {
 				for _, factory := range state.Factories {
 					factory.TickSecond(state.Resources)
 				}
+				state.SecondsLeftInMinute--
+				if state.SecondsLeftInMinute <= 0 {
+					state.SecondsLeftInMinute = 60
+					for _, factory := range state.Factories {
+						factory.TickMinute(state.Resources)
+					}
+				}
 				store.SaveGame(state)
 				fmt.Printf("%v\n", state.Resources)
 				for _, f := range state.Factories {
 					fmt.Printf("%v ", f.Level)
 				}
 				fmt.Println()
-			case <-minuteTicker.C:
-				for _, factory := range state.Factories {
-					factory.TickMinute(state.Resources)
-				}
-				store.SaveGame(state)
 			case upgrade := <-upgradeChan:
 				for _, factory := range state.Factories {
 					if factory.Resource == upgrade.Resource {
