@@ -1,6 +1,8 @@
 package rest
 
 import (
+	"encoding/json"
+	"fmt"
 	"net/http"
 	"og2/game"
 
@@ -41,11 +43,13 @@ type successResponse struct {
 	Success bool `json:"success"`
 }
 
-func RunServer() error {
+func RunServer(store game.Store) error {
 	games := make(map[game.User]game.Game)
 	router := gin.Default()
 
-	// TODO Read all serialized games into games
+	for _, gm := range store.LoadGames() {
+		games[gm.User] = game.Continue(gm, store)
+	}
 
 	router.POST("/user", func(c *gin.Context) {
 		var userRequest userRequest
@@ -56,8 +60,7 @@ func RunServer() error {
 		if _, ok := games[user]; ok {
 			c.Status(http.StatusBadRequest)
 		} else {
-			games[user] = game.Start(user)
-			// TODO Persistence - here or in game.Start? Feel like game.Start is better
+			games[user] = game.Start(user, store)
 			c.Status(http.StatusOK)
 		}
 	})
@@ -72,6 +75,14 @@ func RunServer() error {
 			resp := make(chan game.State)
 			gm.StateChan <- game.StateMessage{Resp: resp}
 			state := <-resp
+
+			// TODO Testing, remove this
+			j, err := json.Marshal(state)
+			if err != nil {
+				panic(err)
+			}
+			fmt.Println(string(j))
+
 			factories := []factoryResponse{}
 			for _, f := range state.Factories {
 				factories = append(factories, factoryResponse{

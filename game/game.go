@@ -59,7 +59,7 @@ type Game struct {
 	UpgradeChan chan<- UpgradeMessage
 }
 
-func Start(user User) Game {
+func Start(user User, store Store) Game {
 	state := State{
 		User:      user,
 		Resources: &Resources{},
@@ -78,11 +78,11 @@ func Start(user User) Game {
 			},
 		},
 	}
-	return Continue(state)
+	store.SaveGame(state)
+	return Continue(state, store)
 }
 
-func Continue(state State) Game {
-	// TODO For state message, probably copy the factories slice
+func Continue(state State, store Store) Game {
 	stateChan := make(chan StateMessage)
 	upgradeChan := make(chan UpgradeMessage)
 
@@ -97,6 +97,7 @@ func Continue(state State) Game {
 				for _, factory := range state.Factories {
 					factory.TickSecond(state.Resources)
 				}
+				store.SaveGame(state)
 				fmt.Printf("%v\n", state.Resources)
 				for _, f := range state.Factories {
 					fmt.Printf("%v ", f.Level)
@@ -106,10 +107,12 @@ func Continue(state State) Game {
 				for _, factory := range state.Factories {
 					factory.TickMinute(state.Resources)
 				}
+				store.SaveGame(state)
 			case upgrade := <-upgradeChan:
 				for _, factory := range state.Factories {
 					if factory.Resource == upgrade.Resource {
 						upgrade.Resp <- factory.Upgrade(state.Resources)
+						store.SaveGame(state)
 						continue mainLoop
 					}
 				}
@@ -118,8 +121,6 @@ func Continue(state State) Game {
 				// Deep-copy the state to make sure we don't get any concurrency issues later.
 				m.Resp <- state.clone()
 			}
-
-			// TODO Serialize the state
 		}
 	}()
 
