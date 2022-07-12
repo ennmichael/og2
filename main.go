@@ -1,12 +1,14 @@
 package main
 
 import (
+	"fmt"
+	"og2/game"
 	"og2/rest"
-	"og2/store"
 )
 
 func main() {
-	store, err := store.Init()
+	store, err := game.InitStore()
+	fmt.Println("Init done")
 	if err != nil {
 		panic(err)
 	}

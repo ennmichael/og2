@@ -11,7 +11,7 @@ type Store struct {
 	db *sql.DB
 }
 
-func Init() (Store, error) {
+func InitStore() (Store, error) {
 	db, err := sql.Open("sqlite3", "games.db")
 	if err != nil {
 		return Store{}, err
@@ -46,7 +46,7 @@ func (s Store) SaveGame(state State) {
 
 func (s Store) LoadGames() []State {
 	games := []State{}
-	rows, err := s.db.Query("SELECT (user, game_json) FROM games")
+	rows, err := s.db.Query("SELECT user, game_json FROM games")
 	defer rows.Close()
 	if err != nil {
 		panic(err)
