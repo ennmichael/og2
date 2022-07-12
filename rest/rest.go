@@ -1,8 +1,6 @@
 package rest
 
 import (
-	"encoding/json"
-	"fmt"
 	"net/http"
 	"og2/game"
 
@@ -75,13 +73,6 @@ func RunServer(store game.Store) error {
 			resp := make(chan game.State)
 			gm.StateChan <- game.StateMessage{Resp: resp}
 			state := <-resp
-
-			// TODO Testing, remove this
-			j, err := json.Marshal(state)
-			if err != nil {
-				panic(err)
-			}
-			fmt.Println(string(j))
 
 			factories := []factoryResponse{}
 			for _, f := range state.Factories {

@@ -36,8 +36,7 @@ func (f *Factory) TickMinute(resources *Resources) {
 	}
 }
 
-// TODO Increase this to 5 later, or maybe just three
-const maxLevel = 2
+const maxLevel = 3
 
 func (f *Factory) Upgrade(resources *Resources) bool {
 	if f.Level == maxLevel || f.Upgrading() {
@@ -90,6 +89,11 @@ func (f Factory) properties() properties {
 				Copper: 250,
 				Gold:   2,
 			}}
+	case f.Resource == Iron && f.Level == 3:
+		return properties{
+			ironPerSecond: 40,
+		}
+
 	case f.Resource == Copper && f.Level == 1:
 		return properties{
 			copperPerSecond: 3,
@@ -106,6 +110,11 @@ func (f Factory) properties() properties {
 				Iron:   400,
 				Copper: 150,
 			}}
+	case f.Resource == Copper && f.Level == 3:
+		return properties{
+			copperPerSecond: 14,
+		}
+
 	case f.Resource == Gold && f.Level == 1:
 		return properties{
 			goldPerMinute:  2,
@@ -122,6 +131,10 @@ func (f Factory) properties() properties {
 				Copper: 200,
 				Gold:   4,
 			}}
+	case f.Resource == Gold && f.Level == 3:
+		return properties{
+			goldPerMinute: 4,
+		}
 	}
 
 	panic(fmt.Sprintf("No case when upgrading resource %v, level %v", f.Resource, f.Level))
